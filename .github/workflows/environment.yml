@@ -1,0 +1,44 @@
+name: Environment
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.11"
+
+      - name: Verify locked environment
+        run: uv sync --frozen
+
+      - name: Run repository policy hooks
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: Enforce secret scan
+        run: uv run pre-commit run detect-secrets --all-files
+
+      - name: Lint configuration and documentation
+        run: uv run ruff check .
+
+      - name: Verify formatting
+        run: uv run ruff format --check .
+
+      - name: Type-check repository tooling
+        run: uv run mypy scripts
+
+      - name: Audit Python dependencies
+        run: uv run pip-audit

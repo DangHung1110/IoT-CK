@@ -1,0 +1,29 @@
+* text=auto
+.editorconfig text eol=lf
+.env.example text eol=lf
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.python-version text eol=lf
+uv.lock text eol=lf
+*.txt text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.ps1 text eol=crlf
+*.sh text eol=lf
+
+# Never attempt text conversion for generated/binary assets
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.pdf binary
+*.zip binary
+*.onnx binary
+*.pt binary
+*.pth binary
+*.ckpt binary
+*.safetensors binary
+*.bin binary
