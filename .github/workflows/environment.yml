@@ -25,6 +25,12 @@ jobs:
       - name: Verify locked environment
         run: uv sync --frozen
 
+      - name: Run repository policy hooks
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: Enforce secret scan
+        run: uv run pre-commit run detect-secrets --all-files
+
       - name: Lint configuration and documentation
         run: uv run ruff check .
 

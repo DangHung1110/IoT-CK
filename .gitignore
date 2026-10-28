@@ -15,11 +15,27 @@ htmlcov/
 .env
 .env.*
 !.env.example
+.envrc
+.direnv/
 *.key
 *.pem
 *.p12
 *.pfx
 *.crt
+*.csr
+*.der
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+credentials*.json
+client_secret*.json
+service_account*.json
+service-account*.json
+oauth_client*.json
+token_store*.json
 secrets/
 
 # IDE and OS
@@ -34,6 +50,9 @@ desktop.ini
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
 
 # Datasets and generated artifacts
 data/**
@@ -58,6 +77,18 @@ runs/
 
 # Notebook runtime output
 .ipynb_checkpoints/
+
+# Tool caches and local agent state
+.opencode/
+.codex/
+.uv/
+
+# ESP32 / PlatformIO generated outputs
+.pio/
+.platformio/
+*.elf
+*.hex
+*.map
 
 # Build outputs
 build/
