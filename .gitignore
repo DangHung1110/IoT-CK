@@ -1,0 +1,65 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+secrets/
+
+# IDE and OS
+.idea/
+.vscode/*.local.json
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and local databases
+*.log
+*.db
+*.db-shm
+*.db-wal
+
+# Datasets and generated artifacts
+data/**
+!data/README.md
+artifacts/**
+!artifacts/README.md
+!artifacts/reviews/
+!artifacts/reviews/*.md
+models/**
+!models/README.md
+runs/
+
+# ML binaries are stored on Google Drive/releases, not Git
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.tflite
+*.engine
+*.bin
+
+# Notebook runtime output
+.ipynb_checkpoints/
+
+# Build outputs
+build/
+dist/
+*.egg-info/

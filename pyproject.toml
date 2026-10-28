@@ -1,0 +1,100 @@
+[project]
+name = "iot-ck-parcel-sorter"
+version = "0.0.0"
+description = "Smart parcel sorting system for the IoT final project"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "pydantic>=2.10,<3",
+  "pydantic-settings>=2.7,<3",
+  "pyyaml>=6.0,<7",
+  "rich>=13.9,<15",
+  "structlog>=24.4,<26",
+  "typer>=0.15,<1",
+]
+
+[project.optional-dependencies]
+# This extra is for Google Colab only. Do not install it on the laptop.
+colab = [
+  "matplotlib>=3.9,<4",
+  "onnx>=1.17,<2",
+  "onnxruntime>=1.20,<2",
+  "pandas>=2.2,<3",
+  "scikit-learn>=1.6,<2",
+  "seaborn>=0.13,<1",
+  "torch>=2.5,<3",
+  "torchvision>=0.20,<1",
+  "ultralytics>=8.3,<9",
+]
+
+[dependency-groups]
+vision-runtime = [
+  "numpy>=2.0,<3",
+  "onnxruntime>=1.20,<2",
+  "opencv-python>=4.10,<5",
+  "pillow>=13,<14",
+]
+qr = [
+  "pyzbar>=0.1.9,<1",
+  "qrcode[pil]>=8,<9",
+]
+console = [
+  "fastapi>=0.115,<1",
+  "httpx>=0.28,<1",
+  "jinja2>=3.1,<4",
+  "python-multipart>=0.0.20,<1",
+  "sqlmodel>=0.0.22,<1",
+  "uvicorn[standard]>=0.34,<1",
+]
+dev = [
+  "detect-secrets>=1.5,<2",
+  "hypothesis>=6.120,<7",
+  "mypy>=1.14,<2",
+  "pip-audit>=2.7,<3",
+  "pre-commit>=4,<5",
+  "pytest>=8.3,<10",
+  "pytest-cov>=6,<8",
+  "ruff>=0.9,<1",
+  "types-pyyaml>=6.0,<7",
+]
+
+[tool.uv]
+package = false
+default-groups = ["dev", "vision-runtime", "qr", "console"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["data", "artifacts", "models", "Spec đề tài*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-config --strict-markers"
+markers = [
+  "integration: local integration tests",
+  "model: tests requiring an ONNX model bundle",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+exclude = ["data/", "artifacts/", "models/"]
