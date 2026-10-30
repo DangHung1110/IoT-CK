@@ -38,7 +38,10 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Type-check repository tooling
-        run: uv run mypy scripts
+        run: uv run mypy src tests scripts
+
+      - name: Run unit tests with coverage
+        run: uv run pytest --cov=parcel_sorter --cov-report=term-missing --cov-fail-under=90
 
       - name: Audit Python dependencies
         run: uv run pip-audit

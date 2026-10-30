@@ -4,7 +4,8 @@ Hệ thống phân loại kiện hàng thông minh sử dụng QR, AI kiểm tra
 
 ## Trạng thái
 
-Môi trường phát triển và CI đã sẵn sàng. Chưa triển khai code chức năng.
+Môi trường phát triển và CI đã sẵn sàng. Đang triển khai L01: hợp đồng dữ liệu và
+kiểm tra chống rò rỉ giữa các tập train/validation/test.
 
 ## Nguyên tắc môi trường
 

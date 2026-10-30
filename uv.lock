@@ -535,7 +535,7 @@ wheels = [
 [[package]]
 name = "iot-ck-parcel-sorter"
 version = "0.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },

@@ -13,6 +13,10 @@ dependencies = [
   "typer>=0.15,<1",
 ]
 
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
 [project.optional-dependencies]
 # This extra is for Google Colab only. Do not install it on the laptop.
 colab = [
@@ -59,13 +63,16 @@ dev = [
 ]
 
 [tool.uv]
-package = false
+package = true
 default-groups = ["dev", "vision-runtime", "qr", "console"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/parcel_sorter"]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-extend-exclude = ["data", "artifacts", "models", "Spec đề tài*.md"]
+extend-exclude = ["Spec đề tài*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
@@ -78,7 +85,8 @@ line-ending = "lf"
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-addopts = "-ra --strict-config --strict-markers"
+pythonpath = ["src"]
+addopts = "-ra --strict-config --strict-markers --basetemp=.pytest_tmp"
 markers = [
   "integration: local integration tests",
   "model: tests requiring an ONNX model bundle",
@@ -97,4 +105,5 @@ fail_under = 90
 python_version = "3.11"
 strict = true
 warn_unused_configs = true
-exclude = ["data/", "artifacts/", "models/"]
+mypy_path = ["src"]
+exclude = ["^(data|artifacts|models)/"]
