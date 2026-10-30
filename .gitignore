@@ -45,6 +45,11 @@ secrets/
 Thumbs.db
 desktop.ini
 
+# Local project notes and guidance
+# Keep planning, specifications, and review notes on the workstation only.
+*.md
+!/README.md
+
 # Logs and local databases
 *.log
 *.db
@@ -56,13 +61,8 @@ desktop.ini
 
 # Datasets and generated artifacts
 data/**
-!data/README.md
 artifacts/**
-!artifacts/README.md
-!artifacts/reviews/
-!artifacts/reviews/*.md
 models/**
-!models/README.md
 runs/
 
 # ML binaries are stored on Google Drive/releases, not Git
