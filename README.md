@@ -4,7 +4,7 @@ Hệ thống phân loại kiện hàng thông minh sử dụng QR, AI kiểm tra
 
 ## Trạng thái
 
-Đang chuẩn bị môi trường và đặc tả. Chưa triển khai code chức năng.
+Môi trường phát triển và CI đã sẵn sàng. Chưa triển khai code chức năng.
 
 ## Nguyên tắc môi trường
 
@@ -21,4 +21,4 @@ Hệ thống phân loại kiện hàng thông minh sử dụng QR, AI kiểm tra
 - Mỗi nhánh phải qua kiểm thử, review và CI trước khi merge vào `dev`.
 - Chỉ merge `dev` vào `main` khi hoàn tất một mốc phát hành.
 
-Xem [CONTRIBUTING.md](CONTRIBUTING.md) và [bộ spec đã tách](spec-split/README.md).
+Tài liệu đặc tả, kế hoạch triển khai và biên bản review được quản lý cục bộ, không đưa lên Git.
