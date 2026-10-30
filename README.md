@@ -4,8 +4,8 @@ Hệ thống phân loại kiện hàng thông minh sử dụng QR, AI kiểm tra
 
 ## Trạng thái
 
-Môi trường phát triển và CI đã sẵn sàng. Đang triển khai L01: hợp đồng dữ liệu và
-kiểm tra chống rò rỉ giữa các tập train/validation/test.
+Môi trường phát triển, CI và hợp đồng dữ liệu L01.1 đã sẵn sàng. Đang chuẩn bị
+Google Colab và Google Drive trước khi tạo pipeline dữ liệu hoặc train model.
 
 ## Nguyên tắc môi trường
 
@@ -13,6 +13,12 @@ kiểm tra chống rò rỉ giữa các tập train/validation/test.
 - Google Drive: nguồn lưu trữ dataset, checkpoint, model export và báo cáo thí nghiệm.
 - Google Colab: toàn bộ training, validation tuning và export PyTorch sang ONNX.
 - Raspberry Pi/ESP32/phần cứng: chỉ bắt đầu sau khi laptop gate hoàn tất.
+
+## Colab bootstrap
+
+- Chạy [notebook bootstrap](notebooks/00_colab_drive_bootstrap.ipynb) bằng GPU runtime trên Google Colab.
+- Notebook chỉ kiểm tra môi trường, mount Drive và ghi `colab_environment.json`; không train model.
+- Không cài hoặc chạy PyTorch/Ultralytics trên laptop.
 
 ## Git flow
 
