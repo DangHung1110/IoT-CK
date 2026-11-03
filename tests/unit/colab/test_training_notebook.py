@@ -20,6 +20,7 @@ def test_training_notebook_is_clean_and_delegates_to_source() -> None:
     assert all(cell.get("execution_count") is None for cell in notebook["cells"])
     assert all(not cell.get("outputs") for cell in notebook["cells"])
     assert "drive.mount" in code
+    assert 'GIT_REF = "feat/model-training-pipeline"' in code
     assert "train_candidate_on_colab" in code
     assert "mobilenet_v3_small,yolov8n_cls" in code
     assert "DATASET_ARCHIVE_SHA256" in code
