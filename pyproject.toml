@@ -3,7 +3,7 @@ name = "iot-ck-parcel-sorter"
 version = "0.0.0"
 description = "Smart parcel sorting system for the IoT final project"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11,<3.14"
 dependencies = [
   "pydantic>=2.10,<3",
   "pydantic-settings>=2.7,<3",

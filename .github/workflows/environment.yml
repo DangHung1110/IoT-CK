@@ -45,3 +45,21 @@ jobs:
 
       - name: Audit Python dependencies
         run: uv run pip-audit
+
+  colab-python-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv with Colab Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.13"
+
+      - name: Install core package only
+        run: uv sync --frozen --no-default-groups
+
+      - name: Import Colab bootstrap on Python 3.13
+        run: uv run --no-default-groups python -c "from parcel_sorter.colab.bootstrap import bootstrap_colab; assert callable(bootstrap_colab)"
