@@ -11,7 +11,7 @@ from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path, PurePosixPath
-from typing import Self
+from typing import Literal, Self
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from PIL import Image, UnidentifiedImageError
@@ -70,6 +70,7 @@ class KaggleImportConfig(BaseModel):
     scope: str = "v0_kaggle_smoke_only_not_final_kpi"
     split_seed: int = 42
     ratios: SplitRatios = SplitRatios()
+    grouping_strategy: Literal["perceptual_hash", "relative_path"] = "perceptual_hash"
     group_regex: str | None = None
 
     @field_validator("classes")
@@ -218,8 +219,15 @@ def _average_hash(path: Path) -> str:
     return f"{int(bits, 2):016x}"
 
 
-def _group_id(relative_path: str, path: Path, group_regex: str | None) -> str:
+def _group_id(
+    relative_path: str,
+    path: Path,
+    group_regex: str | None,
+    grouping_strategy: Literal["perceptual_hash", "relative_path"],
+) -> str:
     if group_regex is None:
+        if grouping_strategy == "relative_path":
+            return f"path:{relative_path}"
         return f"ahash:{_average_hash(path)}"
     match = re.search(group_regex, relative_path)
     if match is None:
@@ -400,7 +408,12 @@ def prepare_kaggle_smoke_dataset(
                 source_relative_path=relative,
                 digest=digest,
                 target_class=target_class,
-                group_id=_group_id(relative, image_path, config.group_regex),
+                group_id=_group_id(
+                    relative,
+                    image_path,
+                    config.group_regex,
+                    config.grouping_strategy,
+                ),
             )
         )
 
@@ -445,7 +458,7 @@ def prepare_kaggle_smoke_dataset(
         scope=config.scope,
         generated_at_utc=generated_at or datetime.now(UTC),
         config=config,
-        grouping_strategy="regex" if config.group_regex else "exact-average-hash",
+        grouping_strategy=("regex" if config.group_regex else config.grouping_strategy),
         image_file_count=len(image_paths),
         accepted_count=len(assigned),
         duplicate_count=sum(item.status == "duplicate" for item in inventory),

@@ -80,7 +80,7 @@ def _binary_config() -> KaggleImportConfig:
             "classes": ("damage", "normal"),
             "class_folder_map": {"normal": "normal", "damage": "damage"},
             "scope": "v0_kaggle_binary_smoke_only_not_final_kpi",
-            "group_regex": r"/([^/]+_g\d+)_",
+            "grouping_strategy": "relative_path",
         }
     )
 
@@ -106,6 +106,7 @@ def test_prepare_supports_binary_kaggle_smoke_dataset(tmp_path: Path) -> None:
 
     report = prepared.report
     assert report.scope == "v0_kaggle_binary_smoke_only_not_final_kpi"
+    assert report.grouping_strategy == "relative_path"
     assert report.accepted_count == 8
     assert set(report.class_counts_by_split["train"]) == {"normal", "damage"}
     assert all(
