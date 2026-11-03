@@ -6,7 +6,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import pytest
 
-from parcel_sorter.data import DatasetSplit, ParcelClass, sha256_file
+from parcel_sorter.data import BinaryParcelClass, DatasetSplit, ParcelClass, sha256_file
 from parcel_sorter.ml.colab_data import (
     DatasetIntegrityError,
     inspect_imagefolder_tree,
@@ -134,6 +134,20 @@ def test_inspect_imagefolder_tree_preserves_explicit_class_order(tmp_path: Path)
     assert dataset_root == tmp_path / "dataset_v1"
     assert tuple(splits[DatasetSplit.TRAIN].image_counts) == CLASS_ORDER
     assert all(count == 1 for count in splits[DatasetSplit.TEST].image_counts.values())
+
+
+def test_inspect_imagefolder_tree_accepts_binary_v0_contract(tmp_path: Path) -> None:
+    binary_order = tuple(BinaryParcelClass)
+    for split in DatasetSplit:
+        for model_class in binary_order:
+            class_dir = tmp_path / "dataset_v0" / split.value / model_class.value
+            class_dir.mkdir(parents=True)
+            (class_dir / "sample.jpg").write_bytes(b"image")
+
+    dataset_root, splits = inspect_imagefolder_tree(tmp_path, class_order=binary_order)
+
+    assert dataset_root.name == "dataset_v0"
+    assert tuple(splits[DatasetSplit.TRAIN].image_counts) == binary_order
 
 
 def test_inspect_imagefolder_tree_rejects_missing_split_and_bad_order(tmp_path: Path) -> None:

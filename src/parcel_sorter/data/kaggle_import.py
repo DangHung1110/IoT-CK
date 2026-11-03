@@ -65,10 +65,20 @@ class KaggleImportConfig(BaseModel):
     source_url: str = Field(pattern=r"^https://www\.kaggle\.com/datasets/")
     license_name: str = Field(min_length=1)
     dataset_version: str = Field(default="v1", pattern=r"^v\d+(?:\.\d+){0,2}$")
-    class_folder_map: dict[str, ParcelClass]
+    classes: tuple[str, ...] = tuple(parcel_class.value for parcel_class in ParcelClass)
+    class_folder_map: dict[str, str]
+    scope: str = "v0_kaggle_smoke_only_not_final_kpi"
     split_seed: int = 42
     ratios: SplitRatios = SplitRatios()
     group_regex: str | None = None
+
+    @field_validator("classes")
+    @classmethod
+    def normalize_classes(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        normalized = tuple(str(item).strip().casefold() for item in value if str(item).strip())
+        if not normalized or len(normalized) != len(set(normalized)):
+            raise ValueError("classes must be non-empty and unique")
+        return normalized
 
     @field_validator("dataset_handle")
     @classmethod
@@ -80,13 +90,23 @@ class KaggleImportConfig(BaseModel):
 
     @field_validator("class_folder_map")
     @classmethod
-    def normalize_folder_mapping(cls, value: dict[str, ParcelClass]) -> dict[str, ParcelClass]:
-        normalized = {key.strip().casefold(): item for key, item in value.items() if key.strip()}
+    def normalize_folder_mapping(cls, value: dict[str, str]) -> dict[str, str]:
+        normalized = {
+            key.strip().casefold(): str(item).strip().casefold()
+            for key, item in value.items()
+            if key.strip()
+        }
         if not normalized or len(normalized) != len(value):
             raise ValueError("class folder names must be non-empty and unique")
-        if set(normalized.values()) != set(ParcelClass):
-            raise ValueError("class folder mapping must cover all five parcel classes")
+        if any(not item for item in normalized.values()):
+            raise ValueError("class folder targets must be non-empty")
         return normalized
+
+    @model_validator(mode="after")
+    def require_complete_mapping(self) -> Self:
+        if set(self.class_folder_map.values()) != set(self.classes):
+            raise ValueError("class folder mapping must cover all configured classes")
+        return self
 
     @field_validator("group_regex")
     @classmethod
@@ -109,7 +129,7 @@ class KaggleImageInventoryRecord(BaseModel):
 
     source_relative_path: str
     sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
-    target_class: ParcelClass | None = None
+    target_class: str | None = None
     group_id: str | None = None
     split: DatasetSplit | None = None
     status: str
@@ -167,7 +187,7 @@ class _AcceptedImage(BaseModel):
     source_path: Path
     source_relative_path: str
     digest: str
-    target_class: ParcelClass
+    target_class: str
     group_id: str
     split: DatasetSplit | None = None
 
@@ -179,7 +199,7 @@ def _canonical_relative_path(path: Path, *, root: Path) -> str:
     return relative.as_posix()
 
 
-def _mapped_class(relative_path: str, mapping: dict[str, ParcelClass]) -> ParcelClass | None:
+def _mapped_class(relative_path: str, mapping: dict[str, str]) -> str | None:
     matches = {
         mapping[part.casefold()]
         for part in PurePosixPath(relative_path).parts[:-1]
@@ -226,8 +246,8 @@ def create_deterministic_zip(source_root: Path, *, destination: Path) -> str:
     return sha256_file(destination)
 
 
-def _seed_for_class(seed: int, parcel_class: ParcelClass) -> int:
-    digest = sha256(f"{seed}:{parcel_class.value}".encode()).digest()
+def _seed_for_class(seed: int, parcel_class: str) -> int:
+    digest = sha256(f"{seed}:{parcel_class}".encode()).digest()
     return int.from_bytes(digest[:8], "big")
 
 
@@ -256,13 +276,13 @@ def _assign_group_splits(
         DatasetSplit.VAL: config.ratios.val,
         DatasetSplit.TEST: config.ratios.test,
     }
-    for parcel_class in ParcelClass:
+    for parcel_class in config.classes:
         groups = [
             group_id for group_id, classes in classes_by_group.items() if classes == {parcel_class}
         ]
         if len(groups) < 3:
             raise KaggleImportError(
-                f"class {parcel_class.value!r} needs at least 3 independent visual groups "
+                f"class {parcel_class!r} needs at least 3 independent visual groups "
                 "to populate train, val, and test"
             )
         rng = random.Random(_seed_for_class(config.split_seed, parcel_class))
@@ -299,12 +319,11 @@ def _write_manifest(path: Path, images: list[_AcceptedImage], config: KaggleImpo
                 {
                     "image_id": image.digest,
                     "derived_path": (
-                        f"{image.split.value}/{image.target_class.value}/"
-                        f"{image.digest[:20]}{suffix}"
+                        f"{image.split.value}/{image.target_class}/{image.digest[:20]}{suffix}"
                     ),
                     "sha256_derived": image.digest,
                     "group_id": image.group_id,
-                    "primary_class": image.target_class.value,
+                    "primary_class": image.target_class,
                     "split": image.split.value,
                     "source": "external",
                     "source_detail": config.dataset_handle,
@@ -397,7 +416,7 @@ def prepare_kaggle_smoke_dataset(
         destination = (
             dataset_root
             / accepted_image.split.value
-            / accepted_image.target_class.value
+            / accepted_image.target_class
             / f"{accepted_image.digest[:20]}{accepted_image.source_path.suffix.lower()}"
         )
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -420,11 +439,10 @@ def prepare_kaggle_smoke_dataset(
     counts: dict[str, dict[str, int]] = {}
     for split in DatasetSplit:
         split_counts = Counter(image.target_class for image in assigned if image.split is split)
-        counts[split.value] = {
-            parcel_class.value: split_counts[parcel_class] for parcel_class in ParcelClass
-        }
+        counts[split.value] = {label: split_counts[label] for label in config.classes}
 
     report = KaggleImportReport(
+        scope=config.scope,
         generated_at_utc=generated_at or datetime.now(UTC),
         config=config,
         grouping_strategy="regex" if config.group_regex else "exact-average-hash",

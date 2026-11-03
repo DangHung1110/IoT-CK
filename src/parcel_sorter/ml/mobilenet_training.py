@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from parcel_sorter.data import DatasetSplit, ParcelClass
+from parcel_sorter.data import DatasetSplit
 from parcel_sorter.ml.colab_data import PreparedDataset
 from parcel_sorter.ml.contracts import ExperimentConfig, ModelCandidate
 from parcel_sorter.ml.training_runtime import (
@@ -232,7 +232,7 @@ def train_mobilenet_candidate(
     model = _build_model(config, torch=torch, torchvision=torchvision)
     criterion = torch.nn.CrossEntropyLoss()
     scaler = torch.amp.GradScaler("cuda", enabled=config.use_amp)
-    ok_index = config.classes.index(ParcelClass.OK)
+    ok_index = config.classes.index(config.pass_class)
     phases = (
         ("head", config.head_epochs, config.learning_rate_head, False),
         ("finetune", config.finetune_epochs, config.learning_rate_finetune, True),

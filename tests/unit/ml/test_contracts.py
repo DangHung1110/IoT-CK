@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from parcel_sorter.data import DamageClass, ParcelClass
+from parcel_sorter.data import BinaryParcelClass, DamageClass, ParcelClass
 from parcel_sorter.ml import (
     DecisionThresholds,
     ExperimentConfig,
@@ -64,7 +64,7 @@ def test_experiment_accepts_explicit_complete_class_order() -> None:
 
 
 def test_experiment_rejects_incomplete_class_order() -> None:
-    with pytest.raises(ValidationError, match="every parcel class exactly once"):
+    with pytest.raises(ValidationError, match="five-class or every binary label"):
         ExperimentConfig(
             candidate=ModelCandidate.YOLOV8N_CLS,
             dataset_version="v0",
@@ -76,3 +76,19 @@ def test_experiment_rejects_incomplete_class_order() -> None:
             preprocess=preprocess(),
             pretrained_checkpoint="yolov8n-cls.pt",
         )
+
+
+def test_experiment_accepts_binary_v0_contract_and_identifies_pass_class() -> None:
+    config = ExperimentConfig(
+        candidate=ModelCandidate.MOBILENET_V3_SMALL,
+        dataset_version="v0",
+        dataset_manifest_sha256="a" * 64,
+        dataset_archive_sha256="b" * 64,
+        split_seed=42,
+        seed=42,
+        classes=(BinaryParcelClass.DAMAGE, BinaryParcelClass.NORMAL),
+        preprocess=preprocess(),
+        pretrained_checkpoint="MobileNet_V3_Small_Weights.IMAGENET1K_V1",
+    )
+
+    assert config.pass_class is BinaryParcelClass.NORMAL

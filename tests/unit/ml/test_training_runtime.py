@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from parcel_sorter.data import ParcelClass
+from parcel_sorter.data import BinaryParcelClass, ParcelClass
 from parcel_sorter.ml import training_runtime
 from parcel_sorter.ml.training_runtime import (
     EpochMetrics,
@@ -78,6 +78,11 @@ def test_class_index_remap_uses_explicit_contract_order() -> None:
         2: 1,
         3: 4,
         4: 3,
+    }
+
+    assert class_index_remap({"damage": 0, "normal": 1}, class_order=tuple(BinaryParcelClass)) == {
+        0: 1,
+        1: 0,
     }
 
 

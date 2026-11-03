@@ -7,7 +7,7 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from parcel_sorter.data import DamageClass, ParcelClass
+from parcel_sorter.data import BinaryParcelClass, DamageClass, ModelClass, ParcelClass
 
 SHA256_PATTERN = r"^[0-9a-f]{64}$"
 DATASET_VERSION_PATTERN = r"^v\d+(?:\.\d+){0,2}$"
@@ -97,7 +97,7 @@ class ExperimentConfig(BaseModel):
     dataset_archive_sha256: str = Field(pattern=SHA256_PATTERN)
     split_seed: int = Field(ge=0)
     seed: int = Field(ge=0)
-    classes: tuple[ParcelClass, ...] = tuple(ParcelClass)
+    classes: tuple[ModelClass, ...] = tuple(ParcelClass)
     preprocess: PreprocessContract
     augmentation: AugmentationContract = AugmentationContract()
     pretrained_checkpoint: str = Field(min_length=1)
@@ -112,8 +112,19 @@ class ExperimentConfig(BaseModel):
 
     @field_validator("classes")
     @classmethod
-    def validate_class_mapping(cls, value: tuple[ParcelClass, ...]) -> tuple[ParcelClass, ...]:
-        """Accept an explicit order but require every parcel class exactly once."""
-        if len(value) != len(ParcelClass) or set(value) != set(ParcelClass):
-            raise ValueError("classes must contain every parcel class exactly once")
+    def validate_class_mapping(cls, value: tuple[ModelClass, ...]) -> tuple[ModelClass, ...]:
+        """Accept either the final five-class or temporary binary label contract."""
+        actual = set(value)
+        valid_contracts = (set(ParcelClass), set(BinaryParcelClass))
+        if actual not in valid_contracts or len(value) != len(actual):
+            raise ValueError(
+                "classes must contain either every five-class or every binary label exactly once"
+            )
         return value
+
+    @property
+    def pass_class(self) -> ModelClass:
+        """Return the non-damage class for the selected label contract."""
+        if ParcelClass.OK in self.classes:
+            return ParcelClass.OK
+        return BinaryParcelClass.NORMAL

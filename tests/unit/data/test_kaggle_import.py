@@ -62,12 +62,64 @@ def _source_tree(root: Path) -> None:
 def test_config_requires_pinned_source_complete_mapping_and_valid_ratios() -> None:
     with pytest.raises(ValidationError, match="owner/dataset/versions/N"):
         _config(dataset_handle="owner/parcel-data")
-    with pytest.raises(ValidationError, match="all five"):
+    with pytest.raises(ValidationError, match="configured classes"):
         _config(class_folder_map={"ok": ParcelClass.OK})
     with pytest.raises(ValidationError, match="sum to 1"):
         SplitRatios(train=0.6, val=0.2, test=0.3)
     with pytest.raises(ValidationError, match="capture group"):
         _config(group_regex=r"no-capture")
+
+
+def _binary_config() -> KaggleImportConfig:
+    return KaggleImportConfig.model_validate(
+        {
+            "dataset_handle": "ducnguyentien69/parcel-classification/versions/1",
+            "source_url": ("https://www.kaggle.com/datasets/ducnguyentien69/parcel-classification"),
+            "license_name": "MIT",
+            "dataset_version": "v0",
+            "classes": ("damage", "normal"),
+            "class_folder_map": {"normal": "normal", "damage": "damage"},
+            "scope": "v0_kaggle_binary_smoke_only_not_final_kpi",
+            "group_regex": r"/([^/]+_g\d+)_",
+        }
+    )
+
+
+def test_prepare_supports_binary_kaggle_smoke_dataset(tmp_path: Path) -> None:
+    source = tmp_path / "binary-download"
+    for class_index, folder_name in enumerate(("normal", "damage")):
+        for group_index in range(4):
+            _write_image(
+                source
+                / "cls_dataset"
+                / "train"
+                / folder_name
+                / f"{folder_name}_g{group_index}_view.png",
+                color=(class_index * 100, group_index * 20, class_index),
+            )
+
+    prepared = prepare_kaggle_smoke_dataset(
+        source_root=source,
+        workspace=tmp_path / "binary-work",
+        config=_binary_config(),
+    )
+
+    report = prepared.report
+    assert report.scope == "v0_kaggle_binary_smoke_only_not_final_kpi"
+    assert report.accepted_count == 8
+    assert set(report.class_counts_by_split["train"]) == {"normal", "damage"}
+    assert all(
+        report.class_counts_by_split[split.value][label] > 0
+        for split in DatasetSplit
+        for label in ("normal", "damage")
+    )
+    with prepared.manifest.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    assert {row["primary_class"] for row in rows} == {"normal", "damage"}
+    with ZipFile(prepared.dataset_archive) as archive:
+        names = archive.namelist()
+    assert any(name.startswith("train/normal/") for name in names)
+    assert any(name.startswith("test/damage/") for name in names)
 
 
 def test_prepare_builds_deduplicated_group_isolated_three_way_dataset(

@@ -25,6 +25,9 @@ def test_training_notebook_is_clean_and_delegates_to_source() -> None:
     assert "mobilenet_v3_small,yolov8n_cls" in code
     assert "DATASET_ARCHIVE_SHA256" in code
     assert "DATASET_MANIFEST_SHA256" in code
+    assert "BinaryParcelClass" in code
+    assert 'DATASET_VERSION = "v0"' in code
+    assert "dataset_v0_splits.zip" in code
     assert "--no-deps" in code
     assert '"requirements" / "colab-training-overlay.txt"' in code
     assert "torch.save" not in code

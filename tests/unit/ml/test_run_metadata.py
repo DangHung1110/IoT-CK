@@ -7,7 +7,7 @@ import pytest
 from pydantic import HttpUrl, ValidationError
 
 from parcel_sorter.colab import AcceleratorInfo
-from parcel_sorter.data import DatasetSplit, ParcelClass
+from parcel_sorter.data import DatasetSplit, ModelClass, ParcelClass
 from parcel_sorter.ml.colab_data import DatasetSplitLayout, PreparedDataset
 from parcel_sorter.ml.contracts import (
     ExperimentConfig,
@@ -51,7 +51,7 @@ def _config() -> ExperimentConfig:
 
 
 def _prepared(tmp_path: Path) -> PreparedDataset:
-    counts = {parcel_class: 1 for parcel_class in CLASS_ORDER}
+    counts: dict[ModelClass, int] = {parcel_class: 1 for parcel_class in CLASS_ORDER}
     return PreparedDataset(
         archive_source=tmp_path / "drive" / "dataset.zip",
         manifest_source=tmp_path / "drive" / "manifest.csv",

@@ -9,7 +9,7 @@ from typing import Self
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
 from parcel_sorter.colab import AcceleratorInfo
-from parcel_sorter.data import DatasetSplit, ParcelClass
+from parcel_sorter.data import DatasetSplit, ModelClass
 from parcel_sorter.ml.colab_data import PreparedDataset
 from parcel_sorter.ml.contracts import ExperimentConfig
 
@@ -36,8 +36,8 @@ class DatasetRunIdentity(BaseModel):
     manifest_source: Path
     archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    class_order: tuple[ParcelClass, ...]
-    image_counts: dict[DatasetSplit, dict[ParcelClass, int]]
+    class_order: tuple[ModelClass, ...]
+    image_counts: dict[DatasetSplit, dict[ModelClass, int]]
 
 
 class TrainingRunManifest(BaseModel):

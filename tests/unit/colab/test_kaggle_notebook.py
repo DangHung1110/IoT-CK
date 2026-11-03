@@ -19,13 +19,16 @@ def test_kaggle_notebook_is_clean_secure_and_uses_tested_pipeline() -> None:
     assert all(cell.get("execution_count") is None for cell in notebook["cells"])
     assert all(not cell.get("outputs") for cell in notebook["cells"])
     assert 'GIT_REF = "feat/model-training-pipeline"' in code
-    assert 'KAGGLE_DATASET_HANDLE = "owner/dataset/versions/1"' in code
+    assert 'KAGGLE_DATASET_HANDLE = "ducnguyentien69/parcel-classification/versions/1"' in code
+    assert 'CLASSES = ("damage", "normal")' in code
+    assert 'DATASET_VERSION = "v0"' in code
     assert 'userdata.get("KAGGLE_API_TOKEN")' in code
     assert "kagglehub==1.0.3" in code
     assert "force_download=True" in code
     assert 'Path("/content/kaggle_download")' in code
     assert "prepare_kaggle_smoke_dataset" in code
     assert "persist_kaggle_smoke_dataset" in code
+    assert "v0_kaggle_binary_smoke_only_not_final_kpi" in code
     assert "TRAIN_RATIO = 0.70" in code
     assert "VAL_RATIO = 0.15" in code
     assert "TEST_RATIO = 0.15" in code

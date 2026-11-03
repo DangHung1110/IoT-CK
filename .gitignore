@@ -78,6 +78,8 @@ runs/
 
 # Notebook runtime output
 .ipynb_checkpoints/
+# Local exploratory notebook contains third-party credentials and runtime output.
+iotprj_dowloand_dataset.ipynb
 
 # Tool caches and local agent state
 .opencode/

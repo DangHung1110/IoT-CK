@@ -9,7 +9,13 @@ from zipfile import BadZipFile, ZipFile, ZipInfo
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from parcel_sorter.data import DatasetSplit, ParcelClass, sha256_file
+from parcel_sorter.data import (
+    BinaryParcelClass,
+    DatasetSplit,
+    ModelClass,
+    ParcelClass,
+    sha256_file,
+)
 
 IMAGE_SUFFIXES = frozenset({".bmp", ".jpeg", ".jpg", ".png", ".webp"})
 MAX_ARCHIVE_MEMBERS = 100_000
@@ -26,7 +32,7 @@ class DatasetSplitLayout(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     path: Path
-    image_counts: dict[ParcelClass, int]
+    image_counts: dict[ModelClass, int]
 
 
 class PreparedDataset(BaseModel):
@@ -39,7 +45,7 @@ class PreparedDataset(BaseModel):
     archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     dataset_root: Path
-    class_order: tuple[ParcelClass, ...]
+    class_order: tuple[ModelClass, ...]
     splits: dict[DatasetSplit, DatasetSplitLayout]
 
 
@@ -139,7 +145,7 @@ def _find_dataset_root(extraction_root: Path) -> Path:
     return candidates.pop()
 
 
-def _inspect_split(path: Path, *, class_order: tuple[ParcelClass, ...]) -> DatasetSplitLayout:
+def _inspect_split(path: Path, *, class_order: tuple[ModelClass, ...]) -> DatasetSplitLayout:
     expected_names = {item.value for item in class_order}
     actual_dirs = {item.name for item in path.iterdir() if item.is_dir()}
     unexpected_files = sorted(item.name for item in path.iterdir() if item.is_file())
@@ -151,7 +157,7 @@ def _inspect_split(path: Path, *, class_order: tuple[ParcelClass, ...]) -> Datas
             f"files_at_split_root={unexpected_files}"
         )
 
-    counts: dict[ParcelClass, int] = {}
+    counts: dict[ModelClass, int] = {}
     for parcel_class in class_order:
         class_dir = path / parcel_class.value
         unsupported = sorted(
@@ -177,11 +183,14 @@ def _inspect_split(path: Path, *, class_order: tuple[ParcelClass, ...]) -> Datas
 def inspect_imagefolder_tree(
     extraction_root: Path,
     *,
-    class_order: tuple[ParcelClass, ...],
+    class_order: tuple[ModelClass, ...],
 ) -> tuple[Path, dict[DatasetSplit, DatasetSplitLayout]]:
-    """Validate the exact five-class train/val/test tree and return image counts."""
-    if len(class_order) != len(ParcelClass) or set(class_order) != set(ParcelClass):
-        raise DatasetIntegrityError("class_order must contain every parcel class exactly once")
+    """Validate a complete binary or five-class train/val/test tree."""
+    actual = set(class_order)
+    if actual not in (set(ParcelClass), set(BinaryParcelClass)) or len(class_order) != len(actual):
+        raise DatasetIntegrityError(
+            "class_order must contain every five-class or binary label exactly once"
+        )
     dataset_root = _find_dataset_root(extraction_root)
     split_layouts: dict[DatasetSplit, DatasetSplitLayout] = {}
     for split in DatasetSplit:
@@ -212,7 +221,7 @@ def stage_verified_dataset(
     expected_manifest_sha256: str,
     drive_root: Path,
     local_workspace: Path,
-    class_order: tuple[ParcelClass, ...],
+    class_order: tuple[ModelClass, ...],
 ) -> PreparedDataset:
     """Verify Drive inputs, copy the archive locally, and validate extracted data."""
     validate_drive_source(archive_source, drive_root=drive_root)

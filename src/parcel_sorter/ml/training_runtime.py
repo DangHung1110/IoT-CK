@@ -12,7 +12,7 @@ from typing import Any, Protocol, cast
 from pydantic import BaseModel, ConfigDict, Field
 
 from parcel_sorter.colab import assert_colab_runtime
-from parcel_sorter.data import ParcelClass
+from parcel_sorter.data import ModelClass
 
 
 class TrainingRuntimeError(RuntimeError):
@@ -106,7 +106,7 @@ def seed_training_runtime(seed: int, *, torch_module: Any) -> None:
 def class_index_remap(
     framework_mapping: Mapping[str, int],
     *,
-    class_order: tuple[ParcelClass, ...],
+    class_order: tuple[ModelClass, ...],
 ) -> dict[int, int]:
     """Map framework-discovered indices onto the single experiment class order."""
     expected_names = {parcel_class.value for parcel_class in class_order}

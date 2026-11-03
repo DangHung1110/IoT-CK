@@ -27,6 +27,16 @@ class ParcelClass(StrEnum):
     UOT = "uot"
 
 
+class BinaryParcelClass(StrEnum):
+    """Temporary v0 labels for public binary parcel datasets."""
+
+    NORMAL = "normal"
+    DAMAGE = "damage"
+
+
+ModelClass = ParcelClass | BinaryParcelClass
+
+
 class DamageClass(StrEnum):
     """Damage types allowed in the multi-value observation field."""
 
