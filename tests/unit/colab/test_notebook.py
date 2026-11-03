@@ -1,6 +1,7 @@
 """Static safety checks for the user-run Colab bootstrap notebook."""
 
 import json
+import tomllib
 from pathlib import Path
 from typing import Any, cast
 
@@ -22,10 +23,20 @@ def test_notebook_is_clean_and_has_no_training_commands() -> None:
     assert all(cell.get("execution_count") is None for cell in notebook["cells"])
     assert all(not cell.get("outputs") for cell in notebook["cells"])
     assert "drive.mount" in code
-    assert "requirements/colab.lock.txt" in code
+    assert "requirements/colab.lock.txt" not in code
+    assert "sys.version_info" in code
+    assert "pydantic_version" in code
+    assert "--no-deps" in code
     assert "bootstrap_colab" in code
     assert "REPORT_PATH=" in code
 
     lowered = code.lower()
     for forbidden in (".train(", ".fit(", "yolo train", "model.export("):
         assert forbidden not in lowered
+
+
+def test_project_metadata_supports_current_colab_python() -> None:
+    pyproject_path = Path(__file__).parents[3] / "pyproject.toml"
+    pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+
+    assert pyproject["project"]["requires-python"] == ">=3.11,<3.14"

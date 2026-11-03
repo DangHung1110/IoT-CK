@@ -18,6 +18,7 @@ Google Colab và Google Drive trước khi tạo pipeline dữ liệu hoặc tra
 
 - Chạy [notebook bootstrap](notebooks/00_colab_drive_bootstrap.ipynb) bằng GPU runtime trên Google Colab.
 - Notebook chỉ kiểm tra môi trường, mount Drive và ghi `colab_environment.json`; không train model.
+- Bootstrap giữ nguyên scientific stack có sẵn của Colab; dependency training chỉ được cài ở notebook training riêng.
 - Không cài hoặc chạy PyTorch/Ultralytics trên laptop.
 
 ## Git flow
