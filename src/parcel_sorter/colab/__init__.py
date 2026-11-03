@@ -1,6 +1,7 @@
 """Google Colab bootstrap helpers."""
 
 from parcel_sorter.colab.bootstrap import (
+    AcceleratorInfo,
     ColabBootstrapReport,
     assert_colab_runtime,
     bootstrap_colab,
@@ -9,6 +10,7 @@ from parcel_sorter.colab.bootstrap import (
 )
 
 __all__ = [
+    "AcceleratorInfo",
     "ColabBootstrapReport",
     "assert_colab_runtime",
     "bootstrap_colab",
