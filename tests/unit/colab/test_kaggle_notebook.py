@@ -24,6 +24,11 @@ def test_kaggle_notebook_is_clean_secure_and_uses_tested_pipeline() -> None:
     assert 'DATASET_VERSION = "v0"' in code
     assert 'userdata.get("KAGGLE_API_TOKEN")' in code
     assert "kagglehub==1.0.3" in code
+    assert "pillow>=13" not in code
+    assert "sys.executable" in code
+    assert 'src_dir = str(repo_dir / "src")' in code
+    assert "sys.path.insert(0, src_dir)" in code
+    assert 'importlib.import_module("parcel_sorter.data.kaggle_import")' in code
     assert "force_download=True" in code
     assert 'Path("/content/kaggle_download")' in code
     assert "prepare_kaggle_smoke_dataset" in code
