@@ -28,6 +28,15 @@ def test_training_notebook_is_clean_and_delegates_to_source() -> None:
     assert "BinaryParcelClass" in code
     assert 'DATASET_VERSION = "v0"' in code
     assert "dataset_v0_splits.zip" in code
+    assert 'src_dir = str(repo_dir / "src")' in code
+    assert "sys.path.insert(0, src_dir)" in code
+    assert 'module_name == "parcel_sorter"' in code
+    assert 'module_name.startswith("parcel_sorter.")' in code
+    assert "del sys.modules[module_name]" in code
+    assert "importlib.invalidate_caches()" in code
+    assert 'importlib.import_module("parcel_sorter")' in code
+    assert "package_path.is_relative_to(repo_dir.resolve())" in code
+    assert 'importlib.import_module("parcel_sorter.ml.contracts")' in code
     assert "HEAD_EPOCHS = 5" in code
     assert "FINETUNE_EPOCHS = 45" in code
     assert "PATIENCE = 7" in code
