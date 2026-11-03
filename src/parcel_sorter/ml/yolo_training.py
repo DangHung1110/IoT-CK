@@ -74,7 +74,7 @@ def train_yolov8n_candidate(
         "amp": config.use_amp,
         "save": True,
         "save_period": config.checkpoint_interval,
-        "patience": 0,
+        "patience": config.patience,
         "pretrained": True,
         "optimizer": "AdamW",
         "lr0": config.learning_rate_finetune,
@@ -110,10 +110,12 @@ def train_yolov8n_candidate(
         {
             "best_checkpoint": best_checkpoint.as_posix(),
             "class_order": class_order,
-            "early_stopping": (
-                "disabled during fitting; validation checkpoints are selected by the shared "
-                "damage-recall/false-reject evaluator"
-            ),
+            "max_epochs": config.head_epochs + config.finetune_epochs,
+            "early_stopping": {
+                "enabled": True,
+                "patience": config.patience,
+                "monitor": "Ultralytics validation fitness",
+            },
             "ultralytics_version": installed_version,
         },
     )

@@ -28,6 +28,12 @@ def test_training_notebook_is_clean_and_delegates_to_source() -> None:
     assert "BinaryParcelClass" in code
     assert 'DATASET_VERSION = "v0"' in code
     assert "dataset_v0_splits.zip" in code
+    assert "HEAD_EPOCHS = 5" in code
+    assert "FINETUNE_EPOCHS = 45" in code
+    assert "PATIENCE = 7" in code
+    assert "head_epochs=HEAD_EPOCHS" in code
+    assert "finetune_epochs=FINETUNE_EPOCHS" in code
+    assert "patience=PATIENCE" in code
     assert "--no-deps" in code
     assert '"requirements" / "colab-training-overlay.txt"' in code
     assert "torch.save" not in code

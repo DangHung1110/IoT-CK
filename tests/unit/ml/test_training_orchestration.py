@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
@@ -263,7 +264,19 @@ def test_mobilenet_two_phase_runner_writes_periodic_and_best_checkpoints(
     assert best == run_dir / "checkpoints" / "best.pt"
     assert best.is_file()
     assert all(parameter.requires_grad for parameter in model._parameters)
-    assert (run_dir / "metrics" / "training_summary.json").is_file()
+    summary = json.loads((run_dir / "metrics" / "training_summary.json").read_text())
+    assert summary["max_epochs"] == 2
+    assert summary["early_stopping"] == {
+        "enabled": True,
+        "monitor_order": [
+            "val_damage_recall:max",
+            "val_false_reject_rate:min",
+            "val_accuracy:max",
+            "val_loss:min",
+        ],
+        "patience": 1,
+        "scope": "per_phase",
+    }
 
 
 def test_mobilenet_runner_rejects_wrong_candidate(tmp_path: Path) -> None:
@@ -277,11 +290,14 @@ def test_mobilenet_runner_rejects_wrong_candidate(tmp_path: Path) -> None:
 
 
 class _FakeYolo:
+    last_train_options: ClassVar[dict[str, Any]] = {}
+
     def __init__(self, checkpoint: str) -> None:
         self.checkpoint = checkpoint
         self.names = {0: "mop", 1: "ok", 2: "rach", 3: "uot", 4: "vo"}
 
     def train(self, **options: Any) -> None:
+        type(self).last_train_options = options
         output = Path(options["project"]) / str(options["name"]) / "weights"
         output.mkdir(parents=True, exist_ok=True)
         (output / "best.pt").write_bytes(b"fake yolo")
@@ -306,7 +322,15 @@ def test_yolo_runner_uses_pinned_package_and_artifact_mapping(
     )
 
     assert best.is_file()
-    assert (tmp_path / "run" / "metrics" / "training_summary.json").is_file()
+    assert _FakeYolo.last_train_options["epochs"] == 2
+    assert _FakeYolo.last_train_options["patience"] == 1
+    summary = json.loads((tmp_path / "run" / "metrics" / "training_summary.json").read_text())
+    assert summary["max_epochs"] == 2
+    assert summary["early_stopping"] == {
+        "enabled": True,
+        "monitor": "Ultralytics validation fitness",
+        "patience": 1,
+    }
 
 
 def test_yolo_runner_rejects_wrong_candidate_checkpoint_and_version(tmp_path: Path) -> None:

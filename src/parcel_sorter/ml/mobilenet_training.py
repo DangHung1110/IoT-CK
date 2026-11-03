@@ -343,6 +343,21 @@ def train_mobilenet_candidate(
         raise TrainingRuntimeError("training completed without a best checkpoint")
     write_json_atomic(
         run_dir / "metrics" / "training_summary.json",
-        {"best_checkpoint": best_path.as_posix(), "best_selection_key": best_key},
+        {
+            "best_checkpoint": best_path.as_posix(),
+            "best_selection_key": best_key,
+            "max_epochs": config.head_epochs + config.finetune_epochs,
+            "early_stopping": {
+                "enabled": True,
+                "patience": config.patience,
+                "scope": "per_phase",
+                "monitor_order": [
+                    "val_damage_recall:max",
+                    "val_false_reject_rate:min",
+                    "val_accuracy:max",
+                    "val_loss:min",
+                ],
+            },
+        },
     )
     return best_path

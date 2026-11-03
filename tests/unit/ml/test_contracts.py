@@ -61,6 +61,9 @@ def test_experiment_accepts_explicit_complete_class_order() -> None:
 
     assert config.classes[0] is ParcelClass.UOT
     assert config.augmentation.rotation_degrees == 8.0
+    assert config.head_epochs == 5
+    assert config.finetune_epochs == 45
+    assert config.patience == 7
 
 
 def test_experiment_rejects_incomplete_class_order() -> None:
