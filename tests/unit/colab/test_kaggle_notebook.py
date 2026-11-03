@@ -21,6 +21,7 @@ def test_kaggle_notebook_is_clean_secure_and_uses_tested_pipeline() -> None:
     assert 'GIT_REF = "feat/model-training-pipeline"' in code
     assert 'KAGGLE_DATASET_HANDLE = "ducnguyentien69/parcel-classification/versions/1"' in code
     assert 'CLASSES = ("damage", "normal")' in code
+    assert 'GROUP_REGEX = r"/(normal|damage)/([^/]+)\\.[^.]+$"' in code
     assert 'DATASET_VERSION = "v0"' in code
     assert 'userdata.get("KAGGLE_API_TOKEN")' in code
     assert "kagglehub==1.0.3" in code
