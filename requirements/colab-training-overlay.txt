@@ -1,0 +1,6 @@
+# Install only in Google Colab with: pip install --no-deps -r requirements/colab-training-overlay.txt
+# Torch, torchvision, NumPy, and Polars intentionally come from the matched Colab runtime.
+nvidia-ml-py==13.615.71
+ultralytics==8.4.191
+ultralytics-platform==0.1.100
+ultralytics-thop==2.2.3
