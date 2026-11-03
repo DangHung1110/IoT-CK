@@ -78,7 +78,7 @@ def _binary_config() -> KaggleImportConfig:
             "license_name": "MIT",
             "dataset_version": "v0",
             "classes": ("damage", "normal"),
-            "class_folder_map": {"normal": "normal", "damage": "damage"},
+            "class_folder_map": {"normal": "normal", "damaged": "damage"},
             "scope": "v0_kaggle_binary_smoke_only_not_final_kpi",
             "grouping_strategy": "relative_path",
         }
@@ -87,12 +87,13 @@ def _binary_config() -> KaggleImportConfig:
 
 def test_prepare_supports_binary_kaggle_smoke_dataset(tmp_path: Path) -> None:
     source = tmp_path / "binary-download"
-    for class_index, folder_name in enumerate(("normal", "damage")):
+    for class_index, folder_name in enumerate(("normal", "damaged")):
         for group_index in range(4):
+            source_split = "train" if group_index < 2 else "valid"
             _write_image(
                 source
                 / "cls_dataset"
-                / "train"
+                / source_split
                 / folder_name
                 / f"{folder_name}_g{group_index}_view.png",
                 color=(class_index * 100, group_index * 20, class_index),
@@ -108,6 +109,7 @@ def test_prepare_supports_binary_kaggle_smoke_dataset(tmp_path: Path) -> None:
     assert report.scope == "v0_kaggle_binary_smoke_only_not_final_kpi"
     assert report.grouping_strategy == "relative_path"
     assert report.accepted_count == 8
+    assert report.unmapped_count == 0
     assert set(report.class_counts_by_split["train"]) == {"normal", "damage"}
     assert all(
         report.class_counts_by_split[split.value][label] > 0
@@ -191,7 +193,10 @@ def test_prepare_requires_three_groups_per_class_and_unambiguous_labels(
                 too_small / parcel_class.value / f"{parcel_class.value}_g{group_index}_view.png",
                 color=(class_index, group_index, 0),
             )
-    with pytest.raises(KaggleImportError, match="at least 3"):
+    with pytest.raises(
+        KaggleImportError,
+        match="has 2 accepted images in 2 independent visual groups; at least 3",
+    ):
         prepare_kaggle_smoke_dataset(
             source_root=too_small,
             workspace=tmp_path / "small-work",

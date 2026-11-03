@@ -20,7 +20,9 @@ def test_kaggle_notebook_is_clean_secure_and_uses_tested_pipeline() -> None:
     assert all(not cell.get("outputs") for cell in notebook["cells"])
     assert 'GIT_REF = "feat/model-training-pipeline"' in code
     assert 'KAGGLE_DATASET_HANDLE = "ducnguyentien69/parcel-classification/versions/1"' in code
+    assert 'KAGGLE_LICENSE = "MIT"' in code
     assert 'CLASSES = ("damage", "normal")' in code
+    assert 'CLASS_MAP = \'{"damaged":"damage","normal":"normal"}\'' in code
     assert 'GROUPING_STRATEGY = "relative_path"' in code
     assert 'GROUP_REGEX = ""' in code
     assert "grouping_strategy=GROUPING_STRATEGY" in code  # pragma: allowlist secret

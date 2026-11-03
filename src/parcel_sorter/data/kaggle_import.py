@@ -289,9 +289,12 @@ def _assign_group_splits(
             group_id for group_id, classes in classes_by_group.items() if classes == {parcel_class}
         ]
         if len(groups) < 3:
+            image_count = sum(len(images_by_group[group_id]) for group_id in groups)
             raise KaggleImportError(
-                f"class {parcel_class!r} needs at least 3 independent visual groups "
-                "to populate train, val, and test"
+                f"class {parcel_class!r} has {image_count} accepted images in "
+                f"{len(groups)} independent visual groups; at least 3 groups are required "
+                "to populate train, val, and test. Check class_folder_map when this count "
+                "is zero"
             )
         rng = random.Random(_seed_for_class(config.split_seed, parcel_class))
         rng.shuffle(groups)
