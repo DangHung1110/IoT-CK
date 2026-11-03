@@ -31,6 +31,10 @@ def test_kaggle_notebook_is_clean_secure_and_uses_tested_pipeline() -> None:
     assert "sys.executable" in code
     assert 'src_dir = str(repo_dir / "src")' in code
     assert "sys.path.insert(0, src_dir)" in code
+    assert 'module_name == "parcel_sorter"' in code
+    assert 'module_name.startswith("parcel_sorter.")' in code
+    assert "del sys.modules[module_name]" in code
+    assert "importlib.invalidate_caches()" in code
     assert 'importlib.import_module("parcel_sorter.data.kaggle_import")' in code
     assert "force_download=True" in code
     assert 'Path("/content/kaggle_download")' in code
