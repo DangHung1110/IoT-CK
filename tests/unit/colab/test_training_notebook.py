@@ -13,6 +13,7 @@ def _load_training_notebook() -> dict[str, Any]:
 
 def test_training_notebook_is_clean_and_delegates_to_source() -> None:
     notebook = _load_training_notebook()
+    cells_by_id = {cell["id"]: "".join(cell["source"]) for cell in notebook["cells"]}
     code = "\n".join(
         "".join(cell["source"]) for cell in notebook["cells"] if cell["cell_type"] == "code"
     )
@@ -47,6 +48,15 @@ def test_training_notebook_is_clean_and_delegates_to_source() -> None:
     assert '"requirements" / "colab-training-overlay.txt"' in code
     assert "torch.save" not in code
     assert ".train(" not in code
+
+    validation_code = cells_by_id["validate-inputs"]
+    assert 'validation_src_dir = repo_dir / "src"' in validation_code
+    assert "validation_src_dir.is_dir()" in validation_code
+    assert "sys.path.insert(0, validation_src)" in validation_code
+    assert "del sys.modules[module_name]" in validation_code
+    assert "importlib.invalidate_caches()" in validation_code
+    assert 'importlib.import_module("parcel_sorter.ml.contracts")' in validation_code
+    assert 'importlib.import_module("parcel_sorter.ml.yolo_training")' in validation_code
 
 
 def test_colab_overlay_is_pinned_and_does_not_replace_torch() -> None:
