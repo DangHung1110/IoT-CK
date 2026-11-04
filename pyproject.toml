@@ -17,6 +17,9 @@ dependencies = [
 requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
+[project.scripts]
+parcel-infer = "parcel_sorter.runtime.cli:main"
+
 [project.optional-dependencies]
 # This extra is for Google Colab only. Do not install it on the laptop.
 colab = [
