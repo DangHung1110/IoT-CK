@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
@@ -9,7 +10,7 @@ import pytest
 from typer.testing import CliRunner
 
 from parcel_sorter.data import BinaryParcelClass
-from parcel_sorter.ml.binary_evaluation import BinaryDecisionCode
+from parcel_sorter.ml.binary_evaluation import BinaryDecisionCode, BinaryThresholds
 from parcel_sorter.runtime import cli
 from parcel_sorter.runtime.inference import BinaryInferenceResult
 
@@ -28,6 +29,10 @@ def _result() -> BinaryInferenceResult:
 class _FakeClassifier:
     def __init__(self, bundle: Path) -> None:
         self.bundle = bundle
+        self.manifest = SimpleNamespace(
+            classes=(BinaryParcelClass.DAMAGE, BinaryParcelClass.NORMAL),
+            thresholds=BinaryThresholds(tau_normal_pass=0.95, tau_damage_confirm=0.5),
+        )
 
     def predict_bgr(self, frame: Any) -> BinaryInferenceResult:
         return _result()
@@ -86,6 +91,9 @@ class _FakeCv2:
 
     def VideoCapture(self, camera: int) -> _FakeCapture:
         return self.capture
+
+    def flip(self, frame: Any, axis: int) -> Any:
+        return frame.copy()
 
 
 def _paths(tmp_path: Path) -> tuple[Path, Path]:
@@ -164,7 +172,7 @@ def test_webcam_command_releases_camera_on_quit(
     fake_cv2 = _FakeCv2(capture=capture)
     monkeypatch.setattr(cli, "_load_cv2", lambda: fake_cv2)
     monkeypatch.setattr(cli, "OnnxBinaryClassifier", _FakeClassifier)
-    monkeypatch.setattr(cli, "annotate_frame", lambda frame, result: frame)
+    monkeypatch.setattr(cli, "annotate_roi_frame", lambda frame, roi, result: frame)
 
     response = CliRunner().invoke(cli.app, ["webcam", "--bundle", str(bundle)])
 

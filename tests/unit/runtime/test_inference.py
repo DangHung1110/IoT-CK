@@ -16,7 +16,14 @@ from parcel_sorter.ml.binary_artifacts import (
 )
 from parcel_sorter.ml.binary_evaluation import BinaryDecisionCode, BinaryThresholds
 from parcel_sorter.ml.contracts import ModelCandidate, PreprocessContract
-from parcel_sorter.runtime.inference import OnnxBinaryClassifier, annotate_frame
+from parcel_sorter.runtime.inference import (
+    BinaryInferenceResult,
+    OnnxBinaryClassifier,
+    TemporalDecisionSmoother,
+    annotate_frame,
+    annotate_roi_frame,
+    centered_square_roi,
+)
 
 
 class _FakeSession:
@@ -172,3 +179,106 @@ def test_annotation_preserves_shape_and_changes_pixels(tmp_path: Path) -> None:
     assert annotated.shape == frame.shape
     assert np.count_nonzero(annotated) > 0
     assert np.count_nonzero(frame) == 0
+
+
+def _inference_result(
+    damage: float, normal: float, decision: BinaryDecisionCode
+) -> BinaryInferenceResult:
+    return BinaryInferenceResult(
+        probabilities={
+            BinaryParcelClass.DAMAGE: damage,
+            BinaryParcelClass.NORMAL: normal,
+        },
+        decision=decision,
+        latency_ms=2.0,
+    )
+
+
+def test_temporal_smoother_warms_up_then_requires_repeated_decisions() -> None:
+    smoother = TemporalDecisionSmoother(
+        classes=(BinaryParcelClass.DAMAGE, BinaryParcelClass.NORMAL),
+        thresholds=BinaryThresholds(tau_normal_pass=0.95, tau_damage_confirm=0.5),
+        window_size=5,
+        stable_frames=3,
+    )
+    raw = _inference_result(0.99, 0.01, BinaryDecisionCode.DAMAGE)
+
+    results = [smoother.update(raw) for _ in range(7)]
+
+    assert all(item.decision is BinaryDecisionCode.AI_UNCERTAIN for item in results[:6])
+    assert not results[5].stable
+    assert results[6].stable
+    assert results[6].decision is BinaryDecisionCode.DAMAGE
+    assert results[6].frames_in_window == 5
+    assert results[6].probabilities[BinaryParcelClass.DAMAGE] == pytest.approx(0.99)
+
+    smoother.reset()
+    reset_result = smoother.update(raw)
+    assert reset_result.frames_in_window == 1
+    assert not reset_result.stable
+
+
+def test_temporal_smoother_averages_probabilities_and_rejects_invalid_config() -> None:
+    thresholds = BinaryThresholds(tau_normal_pass=0.95, tau_damage_confirm=0.5)
+    classes = (BinaryParcelClass.DAMAGE, BinaryParcelClass.NORMAL)
+    with pytest.raises(ValueError, match="window_size"):
+        TemporalDecisionSmoother(classes=classes, thresholds=thresholds, window_size=0)
+    with pytest.raises(ValueError, match="stable_frames"):
+        TemporalDecisionSmoother(
+            classes=classes, thresholds=thresholds, window_size=1, stable_frames=0
+        )
+
+    smoother = TemporalDecisionSmoother(
+        classes=classes, thresholds=thresholds, window_size=2, stable_frames=1
+    )
+    smoother.update(_inference_result(0.2, 0.8, BinaryDecisionCode.AI_UNCERTAIN))
+    result = smoother.update(_inference_result(0.8, 0.2, BinaryDecisionCode.DAMAGE))
+    assert result.probabilities[BinaryParcelClass.DAMAGE] == pytest.approx(0.5)
+    assert result.decision is BinaryDecisionCode.DAMAGE
+
+
+def test_centered_square_roi_crops_expected_pixels_and_validates_input() -> None:
+    frame = np.zeros((100, 200, 3), dtype=np.uint8)
+    roi, crop = centered_square_roi(frame, 0.6)
+
+    assert (roi.x1, roi.y1, roi.x2, roi.y2) == (70, 20, 130, 80)
+    assert crop.shape == (60, 60, 3)
+    with pytest.raises(ValueError, match="ROI scale"):
+        centered_square_roi(frame, 0)
+    with pytest.raises(ValueError, match="three color channels"):
+        centered_square_roi(np.zeros((10, 10), dtype=np.uint8), 0.5)
+
+
+def test_roi_annotation_draws_boundary_and_stabilizing_status() -> None:
+    frame = np.zeros((160, 320, 3), dtype=np.uint8)
+    roi, _ = centered_square_roi(frame, 0.5)
+    result = BinaryInferenceResult(
+        probabilities={
+            BinaryParcelClass.DAMAGE: 0.6,
+            BinaryParcelClass.NORMAL: 0.4,
+        },
+        decision=BinaryDecisionCode.AI_UNCERTAIN,
+        latency_ms=2,
+        stable=False,
+        frames_in_window=2,
+        window_size=5,
+    )
+
+    annotated = annotate_roi_frame(frame, roi, result)
+
+    assert annotated.shape == frame.shape
+    assert np.count_nonzero(annotated) > 0
+
+
+def test_inference_result_rejects_impossible_window_progress() -> None:
+    with pytest.raises(ValueError, match="cannot exceed"):
+        BinaryInferenceResult(
+            probabilities={
+                BinaryParcelClass.DAMAGE: 0.6,
+                BinaryParcelClass.NORMAL: 0.4,
+            },
+            decision=BinaryDecisionCode.DAMAGE,
+            latency_ms=2,
+            frames_in_window=3,
+            window_size=2,
+        )

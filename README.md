@@ -42,6 +42,11 @@ Test webcam, nhấn `Q` hoặc `Esc` để thoát:
 uv run python scripts/infer.py webcam --bundle models/binary-v0 --camera 0
 ```
 
+Webcam chỉ inference vùng ROI vuông cố định ở giữa khung hình, làm mượt xác suất qua 5 frame
+và cần 3 quyết định liên tiếp trước khi xác nhận. Đặt một hộp lấp phần lớn ROI; nhấn `R` để
+xóa lịch sử khi đổi hộp. Có thể chỉnh bằng `--roi-scale 0.7`, `--smoothing-window 5` và
+`--stable-frames 3`. ROI này hỗ trợ căn camera, không phải bounding box do model tự phát hiện.
+
 Runtime xác minh SHA-256 của ONNX trước khi nạp và áp dụng đúng threshold đã đóng băng:
 `tau_normal_pass=0.95`, `tau_damage_confirm=0.50`. Model, ảnh kết quả và dữ liệu cá nhân đều
 nằm trong các thư mục đã ignore, không được push lên Git.
